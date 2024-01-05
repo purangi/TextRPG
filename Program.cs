@@ -9,9 +9,11 @@ namespace TextRPG
         public interface ICharacter //캐릭터, 몬스터 등 공용
         {
             string Name { get; set; }
-            int Attack { get; set; }
-            int Defense { get; set; }
+            int AtkPower { get; set; }
+            int DefPower { get; set; }
             int Health { get; set; }
+
+            void Attack(ICharacter Enemy);
         }
 
         public class Warrior : ICharacter
@@ -19,19 +21,20 @@ namespace TextRPG
             public int Level { get; set; }
             public string Name { get; set; }
             public string Job { get; set; }
-            public int Attack { get; set; }
-            public int Defense { get; set; }
+            public int AtkPower { get; set; }
+            public int DefPower { get; set; }
             public int Health { get; set; }
             public int Gold { get; set; }
             private Item AtkWeapon { get; set; } //무기
             private Item DefArmor { get; set; } //갑옷
+            private int maxHP { get;}
 
             public List<Item> inven = new List<Item>();
 
             //전사, 용병, 마법사 스탯
             string[] jobs = { "전사", "용병", "마법사" };
-            int[] attacks = { 10, 8, 12 };
-            int[] defenses = { 7, 10, 5 };
+            int[] atkPowers = { 10, 8, 12 };
+            int[] defPowers = { 7, 10, 5 };
             int[] healthes = { 100, 80, 50 };
             int[] golds = { 1500, 1200, 2000 };
 
@@ -40,10 +43,19 @@ namespace TextRPG
                 Level = 1;
                 Name = name;
                 Job = jobs[job - 1];
-                Attack = attacks[job - 1];
-                Defense = defenses[job - 1];
+                AtkPower = atkPowers[job - 1];
+                DefPower = defPowers[job - 1];
                 Health = healthes[job - 1];
                 Gold = golds[job - 1];
+                maxHP = Health;
+            }
+
+            public void Attack(ICharacter Enemy)
+            {
+                Random rand = new Random();
+                double atk = (AtkPower * rand.Next(80, 121)) * 0.01;
+                Enemy.Health -= (int) Math.Round(atk);
+                Console.WriteLine("{0}는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(atk));
             }
 
             public void ShowStatus()
@@ -52,7 +64,7 @@ namespace TextRPG
                 Console.WriteLine("캐릭터의 정보가 표시됩니다.\n");
                 Console.WriteLine("    Lv. " + Level.ToString("D2"));
                 Console.WriteLine("    " + Name + " ( " + Job + " )");
-                Console.Write("    공격력 : " + Attack);
+                Console.Write("    공격력 : " + AtkPower);
                 if(AtkWeapon != null)
                 {
                     TextColor(" (+" + AtkWeapon.ItemAtk + ")", ConsoleColor.Yellow);
@@ -60,7 +72,7 @@ namespace TextRPG
                 {
                     Console.WriteLine();
                 }
-                Console.Write("    방어력 : " + Defense);
+                Console.Write("    방어력 : " + DefPower);
                 if (DefArmor != null)
                 {
                     TextColor(" (+" + DefArmor.ItemDef + ")", ConsoleColor.Yellow);
@@ -69,7 +81,7 @@ namespace TextRPG
                 {
                     Console.WriteLine();
                 }
-                Console.WriteLine("    체  력 : " + Health);
+                Console.WriteLine("    체  력 : " + Health + " / " + maxHP);
                 Console.WriteLine("    골  드 : {0} G", Gold);
             }
 
@@ -235,7 +247,9 @@ namespace TextRPG
             TextColor("\n[광장]\n", ConsoleColor.Yellow);
             Console.WriteLine("     1. 상태 보기");
             Console.WriteLine("     2. 인벤토리");
-            Console.WriteLine("     3. 상점\n");
+            Console.WriteLine("     3. 상점");
+            Console.WriteLine("     4. 던전 입장");
+            Console.WriteLine();
 
             int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 3);
 
@@ -257,6 +271,10 @@ namespace TextRPG
                 case 3:
                     //상점
                     Store(character, true);
+                    break;
+                case 4:
+                    //던전
+                    Dungeon();
                     break;
             }
         }
@@ -291,7 +309,6 @@ namespace TextRPG
             }
             
         }
-
         static void Store(Warrior character, bool isFirst)
         {
             Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
@@ -390,7 +407,6 @@ namespace TextRPG
                 Store(character, false);
             }
         }
-
         static int CheckAction(string start, int min, int max)
         {
             while(true)
@@ -409,12 +425,20 @@ namespace TextRPG
                 Console.WriteLine("\n잘못된 입력입니다. 다시 선택해주십시오.");
             }
         }
-
         static void TextColor(string text, ConsoleColor clr)
         {
             Console.ForegroundColor = clr;
             Console.WriteLine(text);
             Console.ResetColor();
+        }
+
+        static void Dungeon()
+        {
+            TextColor("[던전]", ConsoleColor.Yellow);
+
+            Console.WriteLine("1. 훈련 던전     | 방어력 5 이상 권장");
+            Console.WriteLine("2. 일반 던전     | 방어력 11 이상 권장");
+            Console.WriteLine("3. 드래곤 던전   | 방어력 17 이상 권장");
         }
 
         static void Main(string[] args)

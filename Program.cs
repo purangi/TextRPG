@@ -199,15 +199,13 @@ namespace TextRPG
                     }
                 } else
                 {
-                    Console.WriteLine("이미 구매한 아이템입니다.");
+                    TextColor("이미 구매한 아이템입니다.", ConsoleColor.Red);
                 }
             }
 
-            public void SellItem()
+            public void SellItem(int num)
             {
-                int num = ShowInven(true);
-                int cmd = CheckAction("어떤 것을 판매하시겠습니까?", 1, num);
-                Item item = inven[cmd - 1];
+                Item item = inven[num - 1];
                 if(item.isEquipped)
                 {
                     if(item.ItemPart == 0)
@@ -218,9 +216,9 @@ namespace TextRPG
                         AtkWeapon = null;
                     }
                 }
-                Console.WriteLine("{0}'을(를) {1}G에 판매했습니다.", inven[cmd - 1].ItemName, inven[cmd-1].ItemGold * 0.85);
-                Gold += (int) Math.Ceiling(inven[cmd - 1].ItemGold * 0.85);
-                inven.RemoveAt(cmd - 1);
+                Console.WriteLine("{0}'을(를) {1} G 에 판매했습니다.", inven[num - 1].ItemName, inven[num - 1].ItemGold * 0.85);
+                Gold += (int) Math.Ceiling(inven[num - 1].ItemGold * 0.85);
+                inven.RemoveAt(num - 1);
             }
         }
 
@@ -276,7 +274,7 @@ namespace TextRPG
             Console.WriteLine("     4. 던전 입장");
             Console.WriteLine();
 
-            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 3);
+            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 4);
 
             switch (cmd)
             {
@@ -295,11 +293,11 @@ namespace TextRPG
                     break;
                 case 3:
                     //상점
-                    Store(character, true);
+                    Store(character, true, 0);
                     break;
                 case 4:
                     //던전
-                    Dungeon();
+                    Dungeon(character);
                     break;
             }
         }
@@ -334,7 +332,7 @@ namespace TextRPG
             }
             
         }
-        static void Store(Warrior character, bool isFirst)
+        static void Store(Warrior character, bool isFirst, int cmd)
         {
             Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
                            new Item(1, "낡은 검", 1, 2, 0, " 쉽게 부서질 것 같은 낡은 검.", 300),
@@ -385,30 +383,33 @@ namespace TextRPG
             Console.WriteLine("\n[보유 골드]");
             TextColor(character.Gold + " G\n", ConsoleColor.Yellow);
 
-            int cnt = 1;
-            foreach (Item item in shopItem)
+            if(cmd != 2)
             {
-                string equipTxt = "- " + cnt + " ";
+                int cnt = 1;
+                foreach (Item item in shopItem)
+                {
+                    string equipTxt = "- " + cnt + " ";
 
-                equipTxt += ItemList(item);
-                //구매한 아이템이라면 구매완료로 분리
-                if(character.isOwned(item))
-                {
-                    equipTxt += " | 구매 완료";
-                    TextColor(equipTxt, ConsoleColor.DarkGray);
-                } else
-                {
-                    equipTxt += " | " + item.ItemGold.ToString() + " G";
-                    Console.WriteLine(equipTxt);
+                    equipTxt += ItemList(item);
+                    //구매한 아이템이라면 구매완료로 분리
+                    if (character.isOwned(item))
+                    {
+                        equipTxt += " | 구매 완료";
+                        TextColor(equipTxt, ConsoleColor.DarkGray);
+                    }
+                    else
+                    {
+                        equipTxt += " | " + item.ItemGold.ToString() + " G";
+                        Console.WriteLine(equipTxt);
+                    }
+                    cnt++;
                 }
-                cnt++;
             }
 
-            int cmd;
             if(isFirst)
             {
                 Console.WriteLine("\n1. 아이템 구매");
-                //Console.WriteLine("2. 아이템 판매");
+                Console.WriteLine("2. 아이템 판매");
                 Console.WriteLine("0. 나가기\n");
 
                 cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 2);
@@ -418,20 +419,40 @@ namespace TextRPG
                 }
             }
 
-
-            int itemNum = CheckAction("\n구매할 아이템 번호를 선택해주세요.", 1, shopItem.Count);
-            character.BuyItem(shopItem[itemNum - 1]);
-
-            Console.WriteLine("\n1. 아이템 구매 계속하기");
-            Console.WriteLine("0. 나가기\n");
-            cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
-
-            if (cmd == 0)
+            if(cmd == 1)
             {
-                Village(character);
-            } else if(cmd == 1)
+                int itemNum = CheckAction("\n구매할 아이템 번호를 선택해주세요.", 1, shopItem.Count);
+                character.BuyItem(shopItem[itemNum - 1]);
+
+                Console.WriteLine("\n1. 아이템 구매 계속하기");
+                Console.WriteLine("0. 나가기\n");
+                cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
+
+                if (cmd == 0)
+                {
+                    Village(character);
+                }
+                else if (cmd == 1)
+                {
+                    Store(character, false, 1);
+                }
+            } else if(cmd == 2)
             {
-                Store(character, false);
+                int num = character.ShowInven(true);
+                int itemNum = CheckAction("\n어떤 것을 판매하시겠습니까?", 1, num - 1);
+                character.SellItem(itemNum);
+
+                Console.WriteLine("\n1. 아이템 판매 계속하기");
+                Console.WriteLine("0. 나가기\n");
+                cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
+                if (cmd == 0)
+                {
+                    Village(character);
+                }
+                else if (cmd == 1)
+                {
+                    Store(character, false, 2);
+                }
             }
         }
         static int CheckAction(string start, int min, int max)
@@ -459,9 +480,9 @@ namespace TextRPG
             Console.ResetColor();
         }
 
-        static void Dungeon()
+        static void Dungeon(Warrior character)
         {
-            TextColor("[던전]", ConsoleColor.Yellow);
+            TextColor("\n[던전]", ConsoleColor.Yellow);
 
             Console.WriteLine("\n1. 훈련 던전     | 방어력 5 이상 권장");
             Console.WriteLine("2. 일반 던전     | 방어력 11 이상 권장");
@@ -470,11 +491,15 @@ namespace TextRPG
             int cmd = CheckAction("어느 던전을 들어가시겠습니까?", 1, 3);
             switch(cmd)
             {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
+                //case 1:
+                //    break;
+                //case 2:
+                //    break;
+                //case 3:
+                //    break;
+                default: //아직 던전 구현 안됨
+                    Console.WriteLine("\n아직 던전을 이용할 수 없습니다.");
+                    Village(character);
                     break;
             }
         }

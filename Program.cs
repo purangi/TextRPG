@@ -53,9 +53,10 @@ namespace TextRPG
             public void Attack(ICharacter Enemy)
             {
                 Random rand = new Random();
-                double atk = (AtkPower * rand.Next(80, 121)) * 0.01;
-                Enemy.Health -= (int) Math.Round(atk);
-                Console.WriteLine("{0}는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(atk));
+                int atk = AtkPower + AtkWeapon.ItemAtk;
+                double damage = (AtkPower * rand.Next(80, 121)) * 0.01 - Enemy.DefPower;
+                Enemy.Health -= (int) Math.Round(damage);
+                Console.WriteLine("{0}는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(damage));
             }
 
             public void ShowStatus()
@@ -436,9 +437,20 @@ namespace TextRPG
         {
             TextColor("[던전]", ConsoleColor.Yellow);
 
-            Console.WriteLine("1. 훈련 던전     | 방어력 5 이상 권장");
+            Console.WriteLine("\n1. 훈련 던전     | 방어력 5 이상 권장");
             Console.WriteLine("2. 일반 던전     | 방어력 11 이상 권장");
-            Console.WriteLine("3. 드래곤 던전   | 방어력 17 이상 권장");
+            Console.WriteLine("3. 드래곤 던전   | 방어력 20 이상 권장\n");
+
+            int cmd = CheckAction("어느 던전을 들어가시겠습니까?", 1, 3);
+            switch(cmd)
+            {
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+            }
         }
 
         static void Main(string[] args)

@@ -52,16 +52,61 @@ namespace TextRPG
                 Console.WriteLine("캐릭터의 정보가 표시됩니다.\n");
                 Console.WriteLine("    Lv. " + Level.ToString("D2"));
                 Console.WriteLine("    " + Name + " ( " + Job + " )");
-                Console.WriteLine("    공격력 : " + Attack);
-                Console.WriteLine("    방어력 : " + Defense);
+                Console.Write("    공격력 : " + Attack);
+                if(AtkWeapon != null)
+                {
+                    TextColor(" (+" + AtkWeapon.ItemAtk + ")", ConsoleColor.Yellow);
+                } else
+                {
+                    Console.WriteLine();
+                }
+                Console.Write("    방어력 : " + Defense);
+                if (DefArmor != null)
+                {
+                    TextColor(" (+" + DefArmor.ItemDef + ")", ConsoleColor.Yellow);
+                }
+                else
+                {
+                    Console.WriteLine();
+                }
                 Console.WriteLine("    체  력 : " + Health);
                 Console.WriteLine("    골  드 : {0} G", Gold);
             }
 
             public void EquipItem(int num)
             {
-                Item item = inven[num];
-                //item을 장착하면 스탯 변화
+                Item item = inven[num - 1];
+
+                //item을 벗기
+                if(item.isEquipped)
+                {
+                    item.isEquipped = false;
+                    //벗기
+                    if (item.ItemPart == 0)
+                    {
+                        DefArmor = null;
+                    }
+                    else if (item.ItemPart == 1)
+                    {
+                        AtkWeapon = null;
+                    }
+                    Console.WriteLine("\n'{0}'을 장착 해제했습니다.", item.ItemName);
+                } else //장착
+                {
+                    item.isEquipped = true;
+                    //입기
+                    if (item.ItemPart == 0)
+                    {
+                        DefArmor = item;
+                    }
+                    else if (item.ItemPart == 1)
+                    {
+                        AtkWeapon = item;
+                    }
+                    Console.WriteLine("\n'{0}'을 장착했습니다.", item.ItemName);
+                    ShowStatus();
+                }
+                
             }
 
             public int ShowInven(bool isManaging)
@@ -147,7 +192,7 @@ namespace TextRPG
             }
             if (item.ItemDef != 0)
             {
-                defTxt = "| 방어력 +" + item.ItemAtk + " |";
+                defTxt = "| 방어력 +" + item.ItemDef + " |";
             }
 
             string summary = item.ItemName.PadRight(8) + "   " + atkTxt + defTxt + item.ItemSummary;
@@ -231,6 +276,7 @@ namespace TextRPG
                 int max = character.ShowInven(true);
                 int itemNum = CheckAction("\n장착/장착 해제할 아이템을 선택해주세요.", 1, max);
                 //아이템 장착 character.EquipItem() 아마 번호 파라미터로넣을듯?
+                character.EquipItem(itemNum);
             }
         }
 

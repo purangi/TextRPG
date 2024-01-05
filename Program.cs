@@ -53,7 +53,11 @@ namespace TextRPG
             public void Attack(ICharacter Enemy)
             {
                 Random rand = new Random();
-                int atk = AtkPower + AtkWeapon.ItemAtk;
+                int atk = AtkPower;
+                if(AtkWeapon != null)
+                {
+                    atk += AtkWeapon.ItemAtk;
+                }
                 double damage = (AtkPower * rand.Next(80, 121)) * 0.01 - Enemy.DefPower;
                 Enemy.Health -= (int) Math.Round(damage);
                 Console.WriteLine("{0}는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(damage));
@@ -197,6 +201,26 @@ namespace TextRPG
                 {
                     Console.WriteLine("이미 구매한 아이템입니다.");
                 }
+            }
+
+            public void SellItem()
+            {
+                int num = ShowInven(true);
+                int cmd = CheckAction("어떤 것을 판매하시겠습니까?", 1, num);
+                Item item = inven[cmd - 1];
+                if(item.isEquipped)
+                {
+                    if(item.ItemPart == 0)
+                    {
+                        DefArmor = null;
+                    } else
+                    {
+                        AtkWeapon = null;
+                    }
+                }
+                Console.WriteLine("{0}'을(를) {1}G에 판매했습니다.", inven[cmd - 1].ItemName, inven[cmd-1].ItemGold * 0.85);
+                Gold += (int) Math.Ceiling(inven[cmd - 1].ItemGold * 0.85);
+                inven.RemoveAt(cmd - 1);
             }
         }
 
@@ -384,14 +408,16 @@ namespace TextRPG
             if(isFirst)
             {
                 Console.WriteLine("\n1. 아이템 구매");
+                //Console.WriteLine("2. 아이템 판매");
                 Console.WriteLine("0. 나가기\n");
 
-                cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
+                cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 2);
                 if (cmd == 0)
                 {
                     Village(character);
                 }
             }
+
 
             int itemNum = CheckAction("\n구매할 아이템 번호를 선택해주세요.", 1, shopItem.Count);
             character.BuyItem(shopItem[itemNum - 1]);
@@ -403,7 +429,7 @@ namespace TextRPG
             if (cmd == 0)
             {
                 Village(character);
-            } else
+            } else if(cmd == 1)
             {
                 Store(character, false);
             }
@@ -451,6 +477,28 @@ namespace TextRPG
                 case 3:
                     break;
             }
+        }
+
+        public class Monster : ICharacter
+        {
+            public string Name { get; set; }
+            public int AtkPower { get; set; }
+            public int DefPower { get; set; }
+            public int Health { get; set; }
+
+            public Monster(string name, int atkPower,int defPower, int health)
+            {
+                Name = name;
+                AtkPower = atkPower;
+                DefPower = defPower;
+                Health = health;
+            }
+
+            public void Attack(ICharacter Enemy)
+            {
+
+            }
+
         }
 
         static void Main(string[] args)

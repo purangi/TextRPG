@@ -93,25 +93,31 @@ namespace TextRPG
                     Console.WriteLine("\n'{0}'을 장착 해제했습니다.", item.ItemName);
                 } else //장착
                 {
-                    item.isEquipped = true;
                     //입기
                     if (item.ItemPart == 0)
                     {
+                        if(DefArmor != null)
+                        {
+                            DefArmor.isEquipped = false;
+                        }
                         DefArmor = item;
                     }
                     else if (item.ItemPart == 1)
                     {
+                        if (AtkWeapon != null)
+                        {
+                            AtkWeapon.isEquipped = false;
+                        }
                         AtkWeapon = item;
                     }
+                    item.isEquipped = true;
                     Console.WriteLine("\n'{0}'을 장착했습니다.", item.ItemName);
-                    ShowStatus();
                 }
-                
             }
 
             public int ShowInven(bool isManaging)
             {
-                Console.WriteLine("[아이템 목록]\n");
+                Console.WriteLine("\n[아이템 목록]\n");
 
                 if (inven.Count <= 0)
                 {
@@ -134,7 +140,7 @@ namespace TextRPG
                         equipTxt += num.ToString() + " ";
                         if (item.isEquipped)
                         {
-                            equipTxt += "[E]";
+                            equipTxt += "[E] ";
                         }
                     }
 
@@ -222,7 +228,6 @@ namespace TextRPG
                 isEquipped = false;
                 ItemSummary = itemSummary;
             }
-
         }
 
         static void Village(Warrior character)
@@ -251,7 +256,7 @@ namespace TextRPG
                     break;
                 case 3:
                     //상점
-                    Store(character);
+                    Store(character, true);
                     break;
             }
         }
@@ -262,25 +267,32 @@ namespace TextRPG
 
             character.ShowInven(false);
 
-            Console.WriteLine("\n1. 장착 관리");
-            Console.WriteLine("0. 나가기\n");
-            int cmd = CheckAction("원하는 행동을 입력해주세요.\n", 0, 1);
+            while(true)
+            {
+                Console.WriteLine("\n1. 장착 관리");
+                Console.WriteLine("0. 나가기\n");
+                int cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
 
-            if(cmd == 0)
-            {
-                //나가기
-                Village(character);
-            } else
-            {
-                // 장착 관리
-                int max = character.ShowInven(true);
-                int itemNum = CheckAction("\n장착/장착 해제할 아이템을 선택해주세요.", 1, max);
-                //아이템 장착 character.EquipItem() 아마 번호 파라미터로넣을듯?
-                character.EquipItem(itemNum);
+                if (cmd == 0)
+                {
+                    //나가기
+                    Village(character);
+                    break;
+                }
+                else
+                {
+                    // 장착 관리
+                    int max = character.ShowInven(true);
+                    int itemNum = CheckAction("\n장착/장착 해제할 아이템을 선택해주세요.", 1, max);
+                    //아이템 장착 character.EquipItem() 아마 번호 파라미터로넣을듯?
+                    character.EquipItem(itemNum);
+                    continue;
+                }
             }
+            
         }
 
-        static void Store(Warrior character)
+        static void Store(Warrior character, bool isFirst)
         {
             Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
                            new Item(1, "낡은 검", 1, 2, 0, " 쉽게 부서질 것 같은 낡은 검.", 300),
@@ -341,28 +353,30 @@ namespace TextRPG
                 if(character.isOwned(item))
                 {
                     equipTxt += " | 구매 완료";
+                    TextColor(equipTxt, ConsoleColor.DarkGray);
                 } else
                 {
                     equipTxt += " | " + item.ItemGold.ToString() + " G";
+                    Console.WriteLine(equipTxt);
                 }
-                
-                TextColor(equipTxt, ConsoleColor.Gray);
                 cnt++;
             }
 
-            Console.WriteLine("\n1. 아이템 구매");
-            Console.WriteLine("0. 나가기\n");
+            int cmd;
+            if(isFirst)
+            {
+                Console.WriteLine("\n1. 아이템 구매");
+                Console.WriteLine("0. 나가기\n");
 
-            int cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
-            if (cmd == 0)
-            {
-                Village(character);
+                cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
+                if (cmd == 0)
+                {
+                    Village(character);
+                }
             }
-            else
-            {
-                int itemNum = CheckAction("\n구매할 아이템 번호를 선택해주세요.", 1, shopItem.Count);
-                character.BuyItem(shopItem[itemNum - 1]);
-            }
+
+            int itemNum = CheckAction("\n구매할 아이템 번호를 선택해주세요.", 1, shopItem.Count);
+            character.BuyItem(shopItem[itemNum - 1]);
 
             Console.WriteLine("\n1. 아이템 구매 계속하기");
             Console.WriteLine("0. 나가기\n");
@@ -373,7 +387,7 @@ namespace TextRPG
                 Village(character);
             } else
             {
-                Store(character);
+                Store(character, false);
             }
         }
 

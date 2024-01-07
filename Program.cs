@@ -139,12 +139,13 @@ namespace TextRPG
                 if (inven.Count <= 0)
                 {
                     Console.WriteLine("\n인벤토리에 아이템이 없습니다.\n상점에서 아이템을 구매해주세요.\n");
-                    int cmd = CheckAction("0. 나가기", 0, 0);
+                    return 0;
+                    //int cmd = CheckAction("0. 나가기", 0, 0);
 
-                    if(cmd == 0)
-                    {
-                        Village(this);
-                    }
+                    //if(cmd == 0)
+                    //{
+                    //    Village(this);
+                    //}
                 }
 
                 int num = 1;
@@ -165,7 +166,6 @@ namespace TextRPG
                     Console.WriteLine(equipTxt);
                     num++;
                 }
-
                 return num;
             }
 
@@ -265,9 +265,10 @@ namespace TextRPG
             }
         }
 
-        static void Village(Warrior character)
+        static void Village(Warrior character, List<Item> shopItem)
         {
-            TextColor("\n[광장]\n", ConsoleColor.Yellow);
+            TextColor("\n[광장]", ConsoleColor.Yellow);
+            Console.WriteLine("이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.\n");
             Console.WriteLine("     1. 상태 보기");
             Console.WriteLine("     2. 인벤토리");
             Console.WriteLine("     3. 상점");
@@ -284,24 +285,24 @@ namespace TextRPG
                     cmd = CheckAction("\n0. 나가기\n\n원하시는 행동을 입력해주세요.", 0, 0);
                     if(cmd == 0)
                     {
-                        Village(character);
+                        Village(character, shopItem);
                     }
                     break;
                 case 2:
                     //인벤토리
-                    ManageInven(character);
+                    ManageInven(character, shopItem);
                     break;
                 case 3:
                     //상점
-                    Store(character, true, 0);
+                    Store(character, shopItem, true, 0);
                     break;
                 case 4:
                     //던전
-                    Dungeon(character);
+                    Dungeon(character, shopItem);
                     break;
             }
         }
-        static void ManageInven(Warrior character)
+        static void ManageInven(Warrior character, List<Item> shopItem)
         {
             TextColor("\n인벤토리", ConsoleColor.Yellow);
             Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.\n");
@@ -317,66 +318,34 @@ namespace TextRPG
                 if (cmd == 0)
                 {
                     //나가기
-                    Village(character);
+                    Village(character, shopItem);
                     break;
                 }
                 else
                 {
                     // 장착 관리
                     int max = character.ShowInven(true);
-                    int itemNum = CheckAction("\n장착/장착 해제할 아이템을 선택해주세요.", 1, max);
-                    //아이템 장착 character.EquipItem() 아마 번호 파라미터로넣을듯?
-                    character.EquipItem(itemNum);
-                    continue;
+                    if(max == 0)
+                    {
+                        int command = CheckAction("0. 나가기", 0, 0);
+                        if(command == 0) //불필요한가?
+                        {
+                            Village(character, shopItem);
+                        }
+                        break;
+                    } else
+                    {
+                        int itemNum = CheckAction("\n장착/장착 해제할 아이템을 선택해주세요.", 1, max);
+                        //아이템 장착 character.EquipItem() 아마 번호 파라미터로넣을듯?
+                        character.EquipItem(itemNum);
+                        continue;
+                    }
                 }
             }
             
         }
-        static void Store(Warrior character, bool isFirst, int cmd)
+        static void Store(Warrior character, List<Item> shopItem, bool isFirst, int cmd)
         {
-            Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
-                           new Item(1, "낡은 검", 1, 2, 0, " 쉽게 부서질 것 같은 낡은 검.", 300),
-                           new Item(2, "청동 도끼", 1, 4, 0, " 방금까지도 나무를 벤 것 같은 흔한 도끼.", 900)};
-
-            Item[] lv2 = { new Item(3,"무쇠 갑옷", 0, 0, 10, " 숙련자가 만든 튼튼한 갑옷.", 1200),
-                           new Item(4,"가벼운 은검", 1, 7, 0, " 휴대하기 좋은 날카로운 은검.", 1200)};
-
-            Item[] lv3 = { new Item(5,"장인의 갑옷", 0, 0, 15, " 장인이 만든 갑옷. 1년에 단 1개만 제작된다고 한다.", 2000),
-                           new Item(6,"장인의 검", 1, 10, 0, " 장인이 만든 검. 스치기만 해도 치명상을 입는다.", 1600),
-                           new Item(7,"장인의 활", 1, 7, 3, " 장인이 만든 활. 먼 거리에서도 화살이 올곧게 날아간다.", 1600)};
-
-            //전설의 전용 무기
-            Item[] lv5 = { new Item(8,"이카본의 쌍검", 2, 20, 10, " 초대 군주 이카본이 기사단장에게 수여했다고 전해지는 전설의 검. 기사만이 사용할 수 있다.", 5000),
-                           new Item(9,"용병왕의 대검", 3, 15, 15, " 사라진 용병왕의 대검. 용병이 아닌 자는 들 수 없다.", 5000),
-                           new Item(10,"아나로즈의 망토", 4, 10, 10, " 수천년을 산 마녀 아나로즈의 망토. 마법사가 아닌 자는 그 용도를 알 수 없다.", 5000)};
-
-            List<Item> shopItem = new List<Item>();
-            if(character.Level == 1)
-            {
-                for(int i = 0; i < lv1.Length; i++)
-                {
-                    shopItem.Add(lv1[i]);
-                }
-            } else if(character.Level == 2)
-            {
-                for (int i = 0; i < lv2.Length; i++)
-                {
-                    shopItem.Add(lv2[i]);
-                }
-            } else if( character.Level == 3)
-            {
-                for (int i = 0; i < lv3.Length; i++)
-                {
-                    shopItem.Add(lv3[i]);
-                }
-            } else if(character.Level == 5)
-            {
-                for (int i = 0; i < lv5.Length; i++)
-                {
-                    shopItem.Add(lv5[i]);
-                }
-            }
-
             TextColor("\n[상점]", ConsoleColor.Yellow);
             Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
 
@@ -415,7 +384,7 @@ namespace TextRPG
                 cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 2);
                 if (cmd == 0)
                 {
-                    Village(character);
+                    Village(character, shopItem);
                 }
             }
 
@@ -430,11 +399,11 @@ namespace TextRPG
 
                 if (cmd == 0)
                 {
-                    Village(character);
+                    Village(character, shopItem);
                 }
                 else if (cmd == 1)
                 {
-                    Store(character, false, 1);
+                    Store(character, shopItem, false, 1);
                 }
             } else if(cmd == 2)
             {
@@ -447,11 +416,11 @@ namespace TextRPG
                 cmd = CheckAction("원하는 행동을 입력해주세요.", 0, 1);
                 if (cmd == 0)
                 {
-                    Village(character);
+                    Village(character, shopItem);
                 }
                 else if (cmd == 1)
                 {
-                    Store(character, false, 2);
+                    Store(character, shopItem, false, 2);
                 }
             }
         }
@@ -480,7 +449,7 @@ namespace TextRPG
             Console.ResetColor();
         }
 
-        static void Dungeon(Warrior character)
+        static void Dungeon(Warrior character, List<Item> shopItem)
         {
             TextColor("\n[던전]", ConsoleColor.Yellow);
 
@@ -499,7 +468,7 @@ namespace TextRPG
                 //    break;
                 default: //아직 던전 구현 안됨
                     Console.WriteLine("\n아직 던전을 이용할 수 없습니다.");
-                    Village(character);
+                    Village(character, shopItem);
                     break;
             }
         }
@@ -523,18 +492,15 @@ namespace TextRPG
             {
 
             }
-
         }
 
-        static void Main(string[] args)
+        static Warrior MakeCharacter()
         {
             Warrior character;
+
             string name;
 
-            //게임 시작 화면
-            Console.WriteLine("\n\n~~***~~TEXT RPG 모험의 시작~~***~~\n\n");
-
-            while(true)
+            while (true)
             {
                 Console.WriteLine("당신의 이름은 무엇입니까?");
                 name = Console.ReadLine();
@@ -571,9 +537,74 @@ namespace TextRPG
             character = new Warrior(name, job);
 
             Console.WriteLine("\n{0} {1}님, 스파르타 마을에 오신걸 환영합니다.", character.Job, character.Name);
-            Console.WriteLine("이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.");
 
-            Village(character);
+            return character;
+        }
+
+        static List<Item> AddStoreList(List<Item> shopItem, int level)
+        {
+            // 레벨업 시 실행 필요
+            Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
+                           new Item(1, "낡은 검", 1, 2, 0, " 쉽게 부서질 것 같은 낡은 검.", 300),
+                           new Item(2, "청동 도끼", 1, 4, 0, " 방금까지도 나무를 벤 것 같은 흔한 도끼.", 900)};
+
+            Item[] lv2 = { new Item(3,"무쇠 갑옷", 0, 0, 10, " 숙련자가 만든 튼튼한 갑옷.", 1200),
+                           new Item(4,"가벼운 은검", 1, 7, 0, " 휴대하기 좋은 날카로운 은검.", 1200)};
+
+            Item[] lv3 = { new Item(5,"장인의 갑옷", 0, 0, 15, " 장인이 만든 갑옷. 1년에 단 1개만 제작된다고 한다.", 2000),
+                           new Item(6,"장인의 검", 1, 10, 0, " 장인이 만든 검. 스치기만 해도 치명상을 입는다.", 1600),
+                           new Item(7,"장인의 활", 1, 7, 3, " 장인이 만든 활. 먼 거리에서도 화살이 올곧게 날아간다.", 1600)};
+
+            //전설의 전용 무기
+            Item[] lv5 = { new Item(8,"이카본의 쌍검", 2, 20, 10, " 초대 군주 이카본이 기사단장에게 수여했다고 전해지는 전설의 검. 기사만이 사용할 수 있다.", 5000),
+                           new Item(9,"용병왕의 대검", 3, 15, 15, " 사라진 용병왕의 대검. 용병이 아닌 자는 들 수 없다.", 5000),
+                           new Item(10,"아나로즈의 망토", 4, 10, 10, " 수천년을 산 마녀 아나로즈의 망토. 마법사가 아닌 자는 그 용도를 알 수 없다.", 5000)};
+
+            if (level == 1)
+            {
+                for (int i = 0; i < lv1.Length; i++)
+                {
+                    shopItem.Add(lv1[i]);
+                }
+            }
+            else if (level == 2)
+            {
+                for (int i = 0; i < lv2.Length; i++)
+                {
+                    shopItem.Add(lv2[i]);
+                }
+            }
+            else if (level == 3)
+            {
+                for (int i = 0; i < lv3.Length; i++)
+                {
+                    shopItem.Add(lv3[i]);
+                }
+            }
+            else if (level == 5)
+            {
+                for (int i = 0; i < lv5.Length; i++)
+                {
+                    shopItem.Add(lv5[i]);
+                }
+            }
+
+            return shopItem;
+        } 
+
+        static void Main(string[] args)
+        {
+            Warrior character;
+            List<Item> shopItem = new List<Item>();
+
+            //게임 시작 화면
+            Console.WriteLine("\n\n~~***~~TEXT RPG 모험의 시작~~***~~\n\n");
+
+            //캐릭터 생성
+            character = MakeCharacter();
+            shopItem = AddStoreList(shopItem, character.Level);
+            
+            Village(character, shopItem);
         }
     }
 }

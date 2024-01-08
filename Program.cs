@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Numerics;
-using static TextRPG.Program;
+using System.Text.Json;
+using System.Xml.Linq;
+using Newtonsoft.Json;
 
 namespace TextRPG
 {
@@ -20,13 +23,13 @@ namespace TextRPG
         {
             public int Level { get; set; }
             public string Name { get; set; }
-            public string Job { get; set; }
+            public int Job { get; set; }
             public int AtkPower { get; set; }
             public int DefPower { get; set; }
             public int Health { get; set; }
             public int Gold { get; set; }
-            private Item AtkWeapon { get; set; } //무기
-            private Item DefArmor { get; set; } //갑옷
+            public Item AtkWeapon { get; set; } //무기
+            public Item DefArmor { get; set; } //갑옷
             public int maxHP { get;}
 
             public List<Item> inven = new List<Item>();
@@ -42,7 +45,7 @@ namespace TextRPG
             {
                 Level = 1;
                 Name = name;
-                Job = jobs[job - 1];
+                Job = job;
                 AtkPower = atkPowers[job - 1];
                 DefPower = defPowers[job - 1];
                 Health = healthes[job - 1];
@@ -90,7 +93,7 @@ namespace TextRPG
                 TextColor("\n상태 보기", ConsoleColor.Yellow);
                 Console.WriteLine("캐릭터의 정보가 표시됩니다.\n");
                 Console.WriteLine("    Lv. " + Level.ToString("D2"));
-                Console.WriteLine("    " + Name + " ( " + Job + " )");
+                Console.WriteLine("    " + Name + " ( " + jobs[Job - 1] + " )");
                 Console.Write("    공격력 : " + AtkPower);
                 if(AtkWeapon != null)
                 {
@@ -322,14 +325,16 @@ namespace TextRPG
             Console.WriteLine("     3. 상점");
             Console.WriteLine("     4. 회복하기");
             Console.WriteLine("     5. 던전 입장");
+            Console.WriteLine("     6. 저장하기");
             Console.WriteLine();
 
-            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 5);
+            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 6);
 
             switch (cmd)
             {
                 case 1:
                     //상태보기
+                    Console.Clear();
                     character.ShowStatus();
                     cmd = CheckAction("\n0. 나가기\n\n원하시는 행동을 입력해주세요.", 0, 0);
                     if(cmd == 0)
@@ -353,10 +358,14 @@ namespace TextRPG
                     //던전
                     Dungeon(character, shopItem);
                     break;
+                case 6:
+                    SaveJson(character, shopItem);
+                    break;
             }
         }
         static void ManageInven(Warrior character, List<Item> shopItem)
         {
+            Console.Clear();
             TextColor("\n인벤토리", ConsoleColor.Yellow);
             Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.\n");
 
@@ -399,6 +408,7 @@ namespace TextRPG
         }
         static void Store(Warrior character, List<Item> shopItem, bool isFirst, int cmd)
         {
+            Console.Clear();
             TextColor("\n[상점]", ConsoleColor.Yellow);
             Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
 
@@ -477,7 +487,6 @@ namespace TextRPG
                 }
             }
         }
-
         static void Hospital(Warrior character, List<Item> shopItem)
         {
             TextColor("\n[병원]", ConsoleColor.Yellow);
@@ -505,7 +514,7 @@ namespace TextRPG
                     {
                         character.Heal();
                         character.Gold -= 500;
-                        Console.WriteLine("500G 를 지불하였습니다.");
+                        Console.WriteLine("500 G 를 지불하였습니다.");
                         continue;
                     }
                     else
@@ -623,6 +632,39 @@ namespace TextRPG
             }
         }
 
+        static void SaveJson(Warrior character, List<Item> shoplist)
+        {
+            Console.Clear();
+            TextColor("[저장하기]\n", ConsoleColor.Yellow);
+
+            string filepath = "character.json";
+            string json = JsonConvert.SerializeObject(character);
+            File.WriteAllText(filepath, json);
+
+            filepath = "shoplist.json";
+            json = JsonConvert.SerializeObject(shoplist);
+            File.WriteAllText(filepath, json);
+
+            Console.WriteLine("\n저장했습니다.\n");
+            CheckAction("0. 나가기\n", 0, 0);
+            Village(character, shoplist);
+        }
+
+        static Warrior LoadCharacter()
+        {
+            string json = File.ReadAllText("character.json");
+            Warrior character = JsonConvert.DeserializeObject<Warrior>(json);
+
+            return character;
+        }
+
+        static List<Item> LoadShop()
+        {
+            string json = File.ReadAllText("shoplist.json");
+            List<Item> shopList = JsonConvert.DeserializeObject<List<Item>>(json);
+
+            return shopList;
+        }
         static Warrior MakeCharacter()
         {
             Warrior character;
@@ -727,12 +769,21 @@ namespace TextRPG
             List<Item> shopItem = new List<Item>();
 
             //게임 시작 화면
-            Console.WriteLine("\n\n~~***~~TEXT RPG 모험의 시작~~***~~\n\n");
+            Console.WriteLine("    _______  .______          ___       _______   ______   .__   __.   \r\n   |       \\ |   _  \\        /   \\     /  _____| /  __  \\  |  \\ |  |   \r\n   |  .--.  ||  |_)  |      /  ^  \\   |  |  __  |  |  |  | |   \\|  |   \r\n   |  |  |  ||      /      /  /_\\  \\  |  | |_ | |  |  |  | |  . `  |   \r\n   |  '--'  ||  |\\  \\----./  _____  \\ |  |__| | |  `--'  | |  |\\   |   \r\n   |_______/ | _| `._____/__/     \\__\\ \\______|  \\______/  |__| \\__|   \r\n                                                                       \r\n _______   __    __  .__   __.   _______  _______   ______   .__   __. \r\n|       \\ |  |  |  | |  \\ |  |  /  _____||   ____| /  __  \\  |  \\ |  | \r\n|  .--.  ||  |  |  | |   \\|  | |  |  __  |  |__   |  |  |  | |   \\|  | \r\n|  |  |  ||  |  |  | |  . `  | |  | |_ | |   __|  |  |  |  | |  . `  | \r\n|  '--'  ||  `--'  | |  |\\   | |  |__| | |  |____ |  `--'  | |  |\\   | \r\n|_______/  \\______/  |__| \\__|  \\______| |_______| \\______/  |__| \\__| \r\n                                                                       ");
+
+            CheckAction("PRESS 0 TO START", 0, 0);
 
             //캐릭터 생성
-            character = MakeCharacter();
-            shopItem = AddStoreList(shopItem, character.Level);
-            
+            if(File.Exists("character.json") && File.Exists("shoplist.json"))
+            {
+                character = LoadCharacter();
+                shopItem = LoadShop();
+            } else
+            {
+                character = MakeCharacter();
+                shopItem = AddStoreList(shopItem, character.Level);
+            }
+
             Village(character, shopItem);
         }
     }

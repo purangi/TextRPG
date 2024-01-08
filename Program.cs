@@ -27,7 +27,7 @@ namespace TextRPG
             public int Gold { get; set; }
             private Item AtkWeapon { get; set; } //무기
             private Item DefArmor { get; set; } //갑옷
-            private int maxHP { get;}
+            public int maxHP { get;}
 
             public List<Item> inven = new List<Item>();
 
@@ -58,9 +58,31 @@ namespace TextRPG
                 {
                     atk += AtkWeapon.ItemAtk;
                 }
-                double damage = (AtkPower * rand.Next(80, 121)) * 0.01 - Enemy.DefPower;
+                double damage = (atk * rand.Next(80, 121)) * 0.01;
+
+                if (damage - Enemy.DefPower < damage / 2)
+                {
+                    damage /= 2;
+                }
+                else
+                {
+                    damage -= Enemy.DefPower;
+                }
+
                 Enemy.Health -= (int) Math.Round(damage);
-                Console.WriteLine("{0}는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(damage));
+                Console.WriteLine("{0} 은/는 {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(damage));
+            }
+
+            public void LevelUP()
+            {
+                Level++;
+                Console.WriteLine("Level " + Level + "로 레벨업 하였습니다.");
+            }
+
+            public void Heal()
+            {
+                Health = maxHP;
+                Console.WriteLine("체력을 모두 회복했습니다.");
             }
 
             public void ShowStatus()
@@ -140,12 +162,6 @@ namespace TextRPG
                 {
                     Console.WriteLine("\n인벤토리에 아이템이 없습니다.\n상점에서 아이템을 구매해주세요.\n");
                     return 0;
-                    //int cmd = CheckAction("0. 나가기", 0, 0);
-
-                    //if(cmd == 0)
-                    //{
-                    //    Village(this);
-                    //}
                 }
 
                 int num = 1;
@@ -222,6 +238,37 @@ namespace TextRPG
             }
         }
 
+        public class Monster : ICharacter
+        {
+            public string Name { get; set; }
+            public int AtkPower { get; set; }
+            public int DefPower { get; set; }
+            public int Health { get; set; }
+
+            public Monster(string name, int atkPower, int defPower, int health)
+            {
+                Name = name;
+                AtkPower = atkPower;
+                DefPower = defPower;
+                Health = health;
+            }
+
+            public void Attack(ICharacter Enemy)
+            {
+                Random rand = new Random();
+                double damage = (AtkPower * rand.Next(50, 151)) * 0.01;
+                if(damage - Enemy.DefPower < damage / 2)
+                {
+                    damage /= 2;
+                } else
+                {
+                    damage -= Enemy.DefPower;
+                }
+                Enemy.Health -= (int)Math.Round(damage);
+                Console.WriteLine("{0} 은(는) {1}의 데미지를 받았다!", Enemy.Name, (int)Math.Round(damage));
+            }
+        }
+
         static string ItemList(Item item)
         {
             string atkTxt = "";
@@ -267,15 +314,17 @@ namespace TextRPG
 
         static void Village(Warrior character, List<Item> shopItem)
         {
+            Console.Clear();
             TextColor("\n[광장]", ConsoleColor.Yellow);
             Console.WriteLine("이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.\n");
             Console.WriteLine("     1. 상태 보기");
             Console.WriteLine("     2. 인벤토리");
             Console.WriteLine("     3. 상점");
-            Console.WriteLine("     4. 던전 입장");
+            Console.WriteLine("     4. 회복하기");
+            Console.WriteLine("     5. 던전 입장");
             Console.WriteLine();
 
-            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 4);
+            int cmd = CheckAction("어떤 활동을 하시겠습니까?", 1, 5);
 
             switch (cmd)
             {
@@ -297,6 +346,10 @@ namespace TextRPG
                     Store(character, shopItem, true, 0);
                     break;
                 case 4:
+                    //병원
+                    Hospital(character, shopItem);
+                    break;
+                case 5:
                     //던전
                     Dungeon(character, shopItem);
                     break;
@@ -424,6 +477,45 @@ namespace TextRPG
                 }
             }
         }
+
+        static void Hospital(Warrior character, List<Item> shopItem)
+        {
+            TextColor("\n[병원]", ConsoleColor.Yellow);
+            Console.WriteLine("체력을 회복할 수 있습니다.\n");
+
+            Console.WriteLine("현재 체력 : " + character.Health + " / " + character.maxHP);
+
+            while(true)
+            {
+                Console.WriteLine("\n1. 회복하기");
+                Console.WriteLine("0. 나가기\n");
+                int cmd = CheckAction("어떤 행동을 하시겠습니까?", 0, 1);
+
+                if (cmd == 0)
+                {
+                    Village(character, shopItem);
+                }
+                else
+                {
+                    if (character.Health == character.maxHP)
+                    {
+                        Console.WriteLine("이미 체력이 가득 찬 상태입니다.");
+                        continue;
+                    } else if(character.Gold >= 500)
+                    {
+                        character.Heal();
+                        character.Gold -= 500;
+                        Console.WriteLine("500G 를 지불하였습니다.");
+                        continue;
+                    }
+                    else
+                    {
+                        Console.WriteLine("골드가 부족합니다.");
+                        continue;
+                    }
+                }
+            }
+        }
         static int CheckAction(string start, int min, int max)
         {
             while(true)
@@ -455,42 +547,79 @@ namespace TextRPG
 
             Console.WriteLine("\n1. 훈련 던전     | 방어력 5 이상 권장");
             Console.WriteLine("2. 일반 던전     | 방어력 11 이상 권장");
-            Console.WriteLine("3. 드래곤 던전   | 방어력 20 이상 권장\n");
+            Console.WriteLine("3. 드래곤 던전   | 방어력 20 이상 권장");
+            Console.WriteLine("0. 나가기\n");
 
-            int cmd = CheckAction("어느 던전을 들어가시겠습니까?", 1, 3);
+            int cmd = CheckAction("어느 던전을 들어가시겠습니까?", 0, 3);
+            bool isWin = false;
+            Console.Clear();
             switch(cmd)
             {
-                //case 1:
-                //    break;
-                //case 2:
-                //    break;
-                //case 3:
-                //    break;
-                default: //아직 던전 구현 안됨
-                    Console.WriteLine("\n아직 던전을 이용할 수 없습니다.");
+                case 0:
                     Village(character, shopItem);
                     break;
+                case 1:
+                    Monster troll = new Monster("트롤", 4, 2, 30);
+                    isWin = Battle(character, troll);
+                    break;
+                case 2:
+                    Monster goblin = new Monster("고블린", 8, 5, 100);
+                    isWin = Battle(character, goblin);
+                    break;
+                case 3:
+                    Monster dragon = new Monster("드래곤", 30, 20, 300);
+                    isWin = Battle(character, dragon);
+                    break;
             }
+
+            if(isWin == true)
+            {
+                character.LevelUP();
+                AddStoreList(shopItem, character.Level);
+            }
+
+            Village(character, shopItem);
         }
 
-        public class Monster : ICharacter
+        static bool Battle(Warrior character, ICharacter enemy)
         {
-            public string Name { get; set; }
-            public int AtkPower { get; set; }
-            public int DefPower { get; set; }
-            public int Health { get; set; }
-
-            public Monster(string name, int atkPower,int defPower, int health)
+            int turn = 1;
+            while(true)
             {
-                Name = name;
-                AtkPower = atkPower;
-                DefPower = defPower;
-                Health = health;
-            }
+                TextColor("\n[Turn " + turn + "]", ConsoleColor.Yellow);
+                Console.WriteLine(enemy.Name + " / 남은 체력 : (" + enemy.Health + ")\n");
 
-            public void Attack(ICharacter Enemy)
-            {
+                Console.WriteLine("1. 공격");
+                Console.WriteLine("2. 내 상태 확인");
+                Console.WriteLine("0. 도망가기\n");
 
+                int cmd = CheckAction("무엇을 하시겠습니까?", 0, 2);
+                if(cmd == 0)
+                {
+                    return false;
+                } else if(cmd == 1)
+                {
+                    turn++;
+                    character.Attack(enemy);
+
+                    if(enemy.Health <= 0)
+                    {
+                        Console.WriteLine(enemy.Name + "을(를) 물리쳤습니다!");
+                        return true;
+                    }
+
+                    enemy.Attack(character);
+
+                    if(character.Health <= 0)
+                    {
+                        Console.WriteLine(character.Name + "님이 전투불능 상태가 되었습니다.");
+                        return false;
+                        break;
+                    }
+                } else if(cmd == 2)
+                {
+                    character.ShowStatus();
+                }
             }
         }
 
@@ -543,7 +672,7 @@ namespace TextRPG
 
         static List<Item> AddStoreList(List<Item> shopItem, int level)
         {
-            // 레벨업 시 실행 필요
+            // 레벨업 후 숍 방문시 실행 필요
             Item[] lv1 = { new Item(0, "수련자 갑옷", 0, 0, 5, " 초보자를 위한 수련에 도움을 주는 갑옷.", 500),
                            new Item(1, "낡은 검", 1, 2, 0, " 쉽게 부서질 것 같은 낡은 검.", 300),
                            new Item(2, "청동 도끼", 1, 4, 0, " 방금까지도 나무를 벤 것 같은 흔한 도끼.", 900)};
